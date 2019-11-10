@@ -21,19 +21,42 @@ namespace AudioDeviceManager
         private void RescanDevices()
         {
             var enumerator = new MMDeviceEnumerator();
-            var inputdevices = enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active);
             flowLayoutPanelInput.Controls.Clear();
             flowLayoutPanelOutput.Controls.Clear();
             flowLayoutPanelInput.SuspendLayout();
             flowLayoutPanelOutput.SuspendLayout();
-            foreach (var item in inputdevices)
+
+            var devices = enumerator.EnumerateAudioEndPoints(DataFlow.All, DeviceState.All);
+            var sorted = devices.OrderBy(device => device.State);
+            foreach (var device in sorted)
             {
-                flowLayoutPanelInput.Controls.Add(new Device(item.FriendlyName, item));
-            }
-            var outputdevices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
-            foreach (var item in outputdevices)
-            {
-                flowLayoutPanelOutput.Controls.Add(new Device(item.FriendlyName, item));
+                if (device.State == DeviceState.NotPresent) // Skip these devices
+                    continue;
+                if (!toolStripMenuItemFilterStateActive.Checked && device.State == DeviceState.Active)
+                    continue;
+                if (!toolStripMenuItemFilterStateDisabled.Checked && device.State == DeviceState.Disabled)
+                    continue;
+                if (!toolStripMenuItemFilterStateUnplugged.Checked && device.State == DeviceState.Unplugged)
+                    continue;
+
+                var name = device.FriendlyName;
+                name = name.PadRight(80, '-');
+                name += "| " + device.State;
+                name = name.PadRight(95);
+                name += "| " + device.DataFlow;
+                Console.WriteLine($"{name}");
+
+                switch (device.DataFlow)
+                {
+                    case DataFlow.Render:
+                        flowLayoutPanelOutput.Controls.Add(new Device(device));
+                        break;
+                    case DataFlow.Capture:
+                        flowLayoutPanelInput.Controls.Add(new Device(device));
+                        break;
+                    default:
+                        break;
+                }
             }
             flowLayoutPanelInput.ResumeLayout();
             flowLayoutPanelOutput.ResumeLayout();
@@ -53,6 +76,41 @@ namespace AudioDeviceManager
 
         private void Dashboard_Load(object sender, EventArgs e)
         {
+            RescanDevices();
+        }
+
+        private void toolStripMenuItemFilterStateActive_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            item.Checked = !item.Checked;
+            RescanDevices();
+        }
+
+        private void disabledToolStripMenuItemFilterStateDisabled_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            item.Checked = !item.Checked;
+            RescanDevices();
+        }
+
+        private void unpluggedToolStripMenuItemFilterStateUnplugged_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            item.Checked = !item.Checked;
+            RescanDevices();
+        }
+
+        private void iNToolStripMenuItemDataFlowInput_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            item.Checked = !item.Checked;
+            RescanDevices();
+        }
+
+        private void oUTToolStripMenuItemFilterDataFlowOutput_Click(object sender, EventArgs e)
+        {
+            var item = (ToolStripMenuItem)sender;
+            item.Checked = !item.Checked;
             RescanDevices();
         }
     }

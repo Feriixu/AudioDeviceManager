@@ -13,30 +13,68 @@ namespace AudioDeviceManager
 {
     public partial class Device : UserControl
     {
-        private MMDevice device;
+        public MMDevice device;
         private Timer Update;
-        public Device(string name, MMDevice device)
+        public Device(MMDevice device)
         {
             InitializeComponent();
-            labelDeviceName.Text = name;
+            if (device.State != DeviceState.NotPresent)
+                labelDeviceName.Text = device.FriendlyName;
+            switch (device.State)
+            {
+                case DeviceState.Active:
+                    checkBoxEnabled.Checked = true;
+                    checkBoxEnabled.Text = "Active";
+                    break;
+                case DeviceState.Disabled:
+                    checkBoxEnabled.Checked = false;
+                    checkBoxEnabled.Text = "Disabled";
+                    break;
+                case DeviceState.Unplugged:
+                    checkBoxEnabled.Checked = false;
+                    checkBoxEnabled.Text = "Unplugged";
+                    checkBoxEnabled.Enabled = false;
+                    break;
+                default:
+                    checkBoxEnabled.Checked = false;
+                    break;
+            }
+
+
+
             this.device = device;
+            if (device.State == DeviceState.Active)
+                StartTimer();
+
+        }
+
+        private void StartTimer()
+        {
             this.Update = new Timer();
             Update.Interval = 1;
             Update.Tick += UpdateTick;
             Update.Start();
-
         }
 
         ~Device()
         {
-            Update.Stop();
+            Update?.Stop();
         }
 
         private void UpdateTick(object sender, EventArgs e)
         {
-            var value = device.AudioMeterInformation.MasterPeakValue;
-            volumeSliderDevice.Volume = value;
-            waveformPainter1.AddMax(value);
+            try
+            {
+                var value = device.AudioMeterInformation.MasterPeakValue;
+                volumeSliderDevice.Volume = value;
+                waveformPainter.AddMax(value);
+            }
+            catch (Exception) { }
+        }
+
+        private void checkBoxEnabled_CheckedChanged(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
     }
 }
