@@ -66,6 +66,8 @@ namespace AudioDeviceManager
             try
             {
                 var value = device.AudioMeterInformation.MasterPeakValue;
+                if (device.FriendlyName.Contains("Aux Input"))
+                    Console.WriteLine(value);
                 volumeSliderDevice.Volume = value;
                 waveformPainter.AddMax(value);
             }
@@ -74,7 +76,7 @@ namespace AudioDeviceManager
 
         private void checkBoxEnabled_CheckedChanged(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
     }
 }
